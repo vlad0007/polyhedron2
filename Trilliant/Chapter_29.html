@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Chapter 28 - Cushion Trilliant (part 2)</title>
+	<link rel="stylesheet" type="text/css" href="../libs/style.css">
+	<script src="../libs/run_prettify.js?autoload=true&amp;lang=css" defer=""></script>
+	<script type="text/javascript" src="../libs/three.js"></script>
+	<script type = "text/javascript" src = "../libs/dat.gui.js"></script>
+	<script src = "../libs/OrbitControls.js"></script>
+	<script src = "../libs/WebGeometry.js"></script>
+	<script src = "../libs/polyhedron.js"></script>
+	<script src = "trilliant_verts.js"></script>
+	<script src = "trilliant.js"></script>
+	
+	<style>
+		#div_out_big
+		{
+			position: relative;
+			width: 1075px;
+			height: 525px;
+			left: 0px;
+			background-color: #aaffff;
+			border: solid 2px;
+		}
+		#div_in_big
+		{
+			position: absolute;
+			left: 5px;
+			top: 5px;			
+			height: 410px;
+			width: 1145px;
+			background-color: #eeffee;
+			border: solid 2px;
+		}
+		#div_pars_big
+		{
+			position: absolute;
+			left: 530px;
+			top: 2px;			
+			height: 515px;
+			width: 280px;
+			background-color: #eeeeaa;
+			border: solid 2px;
+		}
+		#gui_container_big
+		{
+			position: absolute;
+			left: 820px;
+			top: 5px;
+		}
+	</style>
+</head>
+
+<body>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Trilliant/Chapter_28.html"> <span class=brown>Глава 28 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► &ensp;</span><a href="../Princess/Chapter_30.html"> <span class=brown> Глава 30  </span></a>
+</h3>
+
+<h2 align = "center"> Three.js и геометрия. &ensp; Глава 29. &ensp; Триллиант (<em> Trilliant) </em></h2>
+
+<p>
+В данном разделе мы создадим модель огранки, которая называется 
+<b><a href="http://diamond3d.ucoz.ru/CushionTriA/CushionTrilliantA_wireframe_trackball.html" target="_blank">триллиант</a></b>.
+В качестве рундиста этой огранки
+используется рассмотренный в прошлой главе рундист треугольной "подушки". 
+<p>
+<br>
+<div id="div_out_big"> 
+		<canvas id="canvas" width="522" height="522" style="border: 1px solid"></canvas>
+		<div id="div_pars_big" >
+			<canvas id="canvas_pars" width="280" height="480"></canvas>
+			<div id="div_input">
+				                     <input type="radio" name="numeration" id = "btn_no"  />No
+				&nbsp&nbsp&nbsp&nbsp <input type="radio" name="numeration" id = "btn_all" />All
+				&nbsp&nbsp&nbsp&nbsp <input type="radio" name="numeration" id = "btn_cr_gd_pav"  />Cr-Gd-Pav
+			</div>		
+		</div>
+		<div id="gui_container_big" ></div> 
+</div>
+<p>
+По ссылке  <b><a href="http://diamond3d.ucoz.ru/Dispersion/CushionTrilliant_A_D.html" target="_blank">CushionTrilliant A - Light Dispersion</a></b>  
+можно увидеть эту огранку отображенную при помощи кубических карт. Нажав на приведенной по ссылке 
+странице кнопку <b>Inverse</b> можно увидеть огранку на черном фоне.
+</p>
+
+<h3 align = "center"> Нумерация вершин и обозначение граней модели </h3>
+<p>
+Схематичные изображения короны и павильона огранки, а также нумерация вершин показаны на рисунках <b>1</b> и <b>2</b>. 
+Рисунок <b>1</b> отображает вид огранки когда наблюдатель находится <em>снаружи</em> модели и смотрит на корону 
+<em>сверху</em>. На рисунке <b>2</b> наблюдатель смотрит на павильон <em>сверху</em>
+как если бы он находился <em>внутри</em> модели. 
+</p>
+<img src = "png_01.png" class="center-img-rounded" border = "1px">
+
+<h3 align = "center"> Структура данных модели (СДМ) огранки  </h3>
+&nbsp; &nbsp; Структура данных модели содержит следующие параметры:
+<pre class="prettyprint" id="quine">
+var lw = 1.0;           // отношение длины огранки к ее ширине
+// Рундист
+var r = 0.06;           // толщина рундиста
+var rs = 0.2;           // радиус сопрягающих дуг 
+var angle = 60*DEGREE;  // угол задающий положение границ сегментов на линии рундиста
+
+// Корона
+var beta = 35*DEGREE;   // угол короны
+var t = 0.6;            // размер площадки
+var dSquare = 0.0001;   // задает положение вершин короны в горизонтальной плоскости
+
+// Павильон
+var angle_pav = 50*DEGREE;  // угол павильона
+var hPavFacet = 0.50;       // глубина нижних вершин фасет павильона
+// Калетта
+var culetX = 0.00001;       // смещение калетты по оси OX
+var culetY = 0.00001;       // смещение калетты по оси OY
+</pre>
+
+<h3 align = "center"> Расчет положения вершин огранки  </h3>
+<p>
+Расчет координат вершин рундиста рассматривался в предыдущей главе.
+Построение короны и павильона в основном подобно этим построениям в огранке бриллиант.
+Основные части исходного текста расчета координат вершин короны и павильона приведено ниже:
+</p>
+<pre class="prettyprint" id="quine">
+	...........................................................................
+	...........................................................................
+	// Конструируем корону
+	var r_tan_beta = 0.5 * Math.tan(beta); // beta - угол наклона граней короны
+	var H1 = r/2;	// уровень верхней части рундиста
+	var H2 = -r/2;	// уровень нижней части рундиста
+
+	// точки короны пропорциональны точкам рундиста относительно upPoint (это следует
+	// из предположения, что все грани пересекаются в одной точке)
+	var upPoint = new Point3D(0.0, 0.0, H1 + r_tan_beta);
+
+	for ( i = 0; i < 6; i++ )
+	{
+	   var dir = new Vector3D(girdle[i*8+4][0] - upPoint[0], 
+	                          girdle[i*8+4][1] - upPoint[1], 
+	                          girdle[i*8+4][2] - upPoint[2]);
+		// Вектор dir нельзя нормировать !
+	    crown[i] = new Point3D(upPoint[0] + t * dir[0], 
+	                           upPoint[1] + t * dir[1], 
+	                           upPoint[2] + t * dir[2]);
+	}
+
+	//  Находим точки пересечения основных граней  
+	// короны между собой на уровне рундиста.
+
+	// Сначала создание шести прямых касательных к рундисту
+	var lines = [];
+	for ( i = 0; i < 6; i++ ) 
+	{
+	    var dir = new Vector2D(girdle2[4+i*8+1][0] - girdle2[4+i*8-1][0], 
+	                           girdle2[4+i*8+1][1] - girdle2[4+i*8-1][1]);
+		dir.Normer();
+		var ln = new Line2D();
+		ln.CreateLineVectorPoint(dir, new Point2D(girdle2[4+i*8][0], 
+		                                          girdle2[4+i*8][1]));
+		lines[i] = ln;  
+	}
+
+	// Точки пересечения касательных к рундисту прямых между собой
+	var g2 = [];
+	for ( i = 0; i < 5; i++ )
+	{
+		g2[i+1] = lines[i].IntersectionTwoLines(lines[i+1]);
+	}
+	g2[0] = lines[0].IntersectionTwoLines(lines[5]);
+
+	// Точки звезды (вершины короны) пропорциональны  точкам g2 относительно upPoint
+	// Коэффициент пропорциональности m находим по следующей формуле
+	var m = (1 + SQRT2) / 2 * t;
+	if ( dSquare <= 0 ) 
+		m = m + dSquare * (m - 1 + t);
+	else 
+		m = m + dSquare * (1 - m);
+	// Координаты вершин звезды
+	for ( i = 0; i < 6; i++ )
+	{
+		var dir = new Vector3D( g2[i][0] - upPoint[0], g2[i][1] - upPoint[1], H1 - upPoint[2] );
+		var pt = new Point3D( upPoint[0] + m * dir[0], upPoint[1] + m * dir[1], upPoint[2] + m * dir[2] );
+		crown[i+6] = pt;
+	}
+	......................................................................................
+	......................................................................................
+	//  Конструируем павильон            
+	pavil[6] = new Point3D(); 
+	pavil[6][0] = culetX;
+	pavil[6][1] = culetY;
+	pavil[6][2] = - 0.5 * Math.tan(angle_pav)- r/2;
+
+	//  Находим точки пересечения основных граней  
+	// павильона между собой на уровне рундиста.
+	// На самом деле это те же самые точки из массива g2,
+	// которые мы определили при построении короны.
+	// Поэтому при построении короны воспользуемся значениями 
+	// из этого массива.
+
+	for (i = 0; i < 6; i++)
+	{
+		var dir = new Vector3D(pavil[6][0] - g2[i][0], pavil[6][1] - g2[i][1], pavil[6][2] + r/2);
+	//		dir.normer();
+		pavil[i] = new Point3D(); 
+		pavil[i][0] = pavil[6][0] - (1 - hPavFacet) * dir[0];
+		pavil[i][1] = pavil[6][1] - (1 - hPavFacet) * dir[1];
+		pavil[i][2] = pavil[6][2] - (1 - hPavFacet) * dir[2];
+	}
+	...........................................................
+	</pre>
+	
+<h3 align = "center"> Краткое резюме  </h3>
+<p>
+По ссылке  <b><a href="http://diamond3d.ucoz.ru/Dispersion/CushionTrilliant_B_D_Inverse.html" target="_blank">Cushion Trilliant B - Light Dispersion</a></b>  
+можно увидеть еще один подобный триллиант но с павильоном более сложной формы. На рисунке <b>3</b> показано изображение этой огранки.
+</p>
+<img src = "png_02.png" class="center-img-rounded" border = "1px">
+Кроме огранок триллиант построенных на основе рундиста подушка существуют триллианты с более простым рундистом. Некоторые из них
+показаны на рисунке <b>4</b> и по ссылкам  <b><a href="http://diamond3d.ucoz.ru/Trilliant/Trilliant_wireframe_trackball.html" target="_blank">триллиант</a></b> и
+<b><a href="http://diamond3d.ucoz.ru/Shield/Shield_wireframe_trackball.html" target="_blank">щит</a></b>
+<br>
+Отображения при помощи кубических карт можно найти по ссылкам 
+<b><a href="http://diamond3d.ucoz.ru/Dispersion/Trilliant_D.html" target="_blank">Trilliant - Light Dispersion</a></b> и
+<b><a href="http://diamond3d.ucoz.ru/Dispersion/Shield_D.html"  target="_blank">Shield - Light Dispersion</a></b>.
+
+
+<p>
+<img src = "png_03.png" class="center-img-rounded" border = "1px">
+</p>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Trilliant/Chapter_28.html"> <span class=brown>Глава 28 </span></a>  <span class=brown>&ensp;◄</span></a>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► </span><a href="../Princess/Chapter_30.html"> <span class=brown> Глава 30 </span></a>
+</h3>
+
+</body>
+</html>

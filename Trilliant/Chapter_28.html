@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Chapter 28 - Cushion Trilliant (part 1)</title>
+	<link rel="stylesheet" type="text/css" href="../libs/style.css">
+	<script src="../libs/run_prettify.js?autoload=true&amp;lang=css" defer=""></script>
+	<script type = "text/javascript" src = "../libs/dat.gui.js"></script>
+	<script src="../libs/WebGeometry.js"></script>
+	<script src="../libs/canvas2D.js"></script>
+	<script src="trilliant_girdle.js"></script>
+	
+	<style>
+		div.out
+		{
+			position: relative;
+			width: 605px;
+			height: 605px;
+			left: 0px;
+			background-color: #ffffff;
+			border: solid 1px;
+		}
+	</style>
+
+<script>
+	function initiate()		
+	{
+		trilliant();
+	}
+	addEventListener("load", initiate);
+</script>
+
+</head>
+
+<body>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Octagram/Chapter_27.html"> <span class=brown>Глава 27 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► &ensp;</span><a href="../Trilliant/Chapter_29.html"> <span class=brown> Глава 29  </span></a>
+</h3>
+
+<h2 align = "center"> Three.js и геометрия. &ensp; Глава 28. &ensp; Рундист огранки треугольная "подушка"  (<em>Cushion Trilliant</em>)</h2>
+<p>
+В предыдущих главах было рассмотрено построение огранок имеющих рундист в виде прямоугольной подушки (<em>cushion</em>).
+В данной главе рассмотрена <em>online</em>-программа создания рундиста в виде треугольной подушки (<em>cushion trilliant</em>).
+Можно построить рундист имеющий три разных размера сторон "подушки". Мы ограничимся созданием равносторонней 
+треугольной "подушки". Рундист в этом случае будет представлять собой замкнутую кривую имеющую постоянную ширину.
+Популярное описание таких кривых можно найти 
+в  <a href="http://kvant.mccme.ru/1971/03/udivitelnye_katki.htm"> третьем номере журналва "Квант" за 1971 год</a>.
+
+</p>
+
+<div class="out" id="out_girdle_01">  
+		<canvas id="canvas_01" width="600" height="600" style="border: 1px solid"></canvas>
+</div>
+<p>
+Радиус всех трех сопрягающих дуг будем задавать только одним, единым для всех сопрягающих дуг, параметром <b>rs</b>.
+Так как мы условились что подушка будет равносторонней, то радиус трех основных дуг из которых состоит линия рундиста
+примем равным <b>1.0</b> уменьшенном на значение <b>rs</b>.
+<br>
+&nbsp; Параметр <b>angle</b> задает положение границ сегментов на линии рундиста.
+</p>
+<p>
+Отношение длины "подушки" к ее ширине как всегда будем задавать параметром <b>lw</b>. Однако, при значении этого
+параметра не равным <b>1.0</b> "подушка" станет не равносторонней и кривая рундиста перестанет быть кривой имеющей постоянную ширину.
+Поэтому при нажатии кнопки <b>Girdle ratio (lw)</b> все линии при помощи которых происходит пострение, исчезнут
+с экрана и на нем останется только соответствующая значению параметра <b>lw</b> линия рундиста.
+Методика построения линии рундиста и расстановка вершин на ней во многом повторяет методику рассмотренную при построении
+рундиста четырехугольных "подушек".
+<br>
+&nbsp; Далее приведен исходный текст функции <code>init_trilliant</code> в которой происходит расчет линии рундиста и расстановка
+вершин на ней.
+</p>
+<pre class="prettyprint" id="quine">
+function init_trilliant()
+{
+	var i;
+	var point1 = new Point2D(); 
+	var point2 = new Point2D();
+	// Радиусы сопрягающих окружностей
+	var Rs1 = rs;
+	var Rs2 = rs;
+	var Rs3 = rs;
+	
+	// Радиусы основных окружностей
+	var R1 = 1.0 - Rs1;
+	var R2 = 1.0 - Rs2;
+	var R3 = 1.0 - Rs3;	
+	
+	// Положение центров основных и сопрягающих окружностей.
+	O1 = new Point2D(-(R1 - Rs1)/2, 0.0);
+	O2 = new Point2D( (R1 - Rs2)/2, 0.0);
+	O3 = new Point2D( 0.0, (R1 - Rs3) * Math.sin(60*DEGREE));	
+	
+	// Основные окружности
+	var cir1 = new Circle2D(O1, R1);
+	var cir2 = new Circle2D(O2, R2);
+	var cir3 = new Circle2D(O3, R3);
+	
+	// Сопрягающие окружности
+	cir1s = new Circle2D(O1, Rs1 + EPSILON);
+	cir2s = new Circle2D(O2, Rs2 + EPSILON);
+	cir3s = new Circle2D(O3, Rs3 + EPSILON);
+	
+	var ln1 = new Line2D(O3, new Point2D(0, 1));
+	var ln2 = new Line2D(O2, new Point2D(O2[0] + Math.cos(-30*DEGREE), O2[1] + Math.sin(-30*DEGREE)));
+
+	if(!cir3s.IntersectionLineCircle(ln1, point1, point2))
+	{
+		return null;
+	}
+	
+	if (point1[1] > point2[1])
+	{
+		girdle[0] = new Point2D(point1[0], point1[1]);
+	}
+	else
+	{
+		girdle[0] = new Point2D(point2[0], point2[1]);		
+	}	
+	
+	if(!cir2s.IntersectionLineCircle(ln2, point1, point2))
+	{
+		return null;
+	}
+	
+	if (point1[0] > point2[0])
+	{
+		girdle[16] = new Point2D(point1[0], point1[1]);
+	}
+	else
+	{
+		girdle[16] = new Point2D(point2[0], point2[1]);		
+	}
+
+	// Точки пересечения окружностей cir1 и cir2 с сопрягающей окружностью cir3
+	F = new Point2D(); 
+	G = new Point2D(); 
+	H = new Point2D(); 
+	
+	if(!cir1.IntersectionTwoCircles(cir3s, F, point2))
+	{
+		return 0;
+	}
+
+	if(!cir1.IntersectionTwoCircles(cir2s, G, point2))
+	{
+		return 0;
+	}
+
+	if(!cir3.IntersectionTwoCircles(cir2s, H, point2))
+	{
+		return 0;
+	}
+	
+	var O3_f = new Line2D(O3, F);
+	var O2_g = new Line2D(O2, G);
+	
+	// Точки на радиусах сопрягающей окружности cir3
+	t = new Point2D(O3[0] + Math.cos(M_PI_2 - angle),     O3[1] + Math.sin(M_PI_2 - angle));
+	u = new Point2D(O2[0] + Math.cos(-30*DEGREE + angle), O2[1] + Math.sin(-30*DEGREE + angle));
+	v = new Point2D(O2[0] + Math.cos(-30*DEGREE - angle), O2[1] + Math.sin(-30*DEGREE - angle));
+	
+
+	// Прямые используемые для нахождения границ сегментов рундиста.
+	//      ln_O3_t, ln_O2_u, ln_O2_v;
+	var ln_O3_t = new Line2D(O3, t);
+	var ln_O2_u = new Line2D(O2, u);
+	var ln_O2_v = new Line2D(O2, v);	
+	
+	// girdle[4]
+	if(!cir1.IntersectionLineCircle(ln_O3_t, point1, point2))
+	{
+		return 0;
+	}
+	if (point1[0] > point2[0])
+	{
+		girdle[4] = new Point2D(point1[0], point1[1]);
+	}
+	else
+	{
+		girdle[4] = new Point2D(point2[0], point2[1]);		
+	}
+
+	// girdle[12]
+	if(!cir1.IntersectionLineCircle(ln_O2_u, point1, point2))
+	{
+		return 0;
+	}
+	if (point1[0] > point2[0])
+	{
+		girdle[12] = new Point2D(point1[0], point1[1]);
+	}
+	else
+	{
+		girdle[12] = new Point2D(point2[0], point2[1]);		
+	}
+
+	// girdle[20]
+	if(!cir3.IntersectionLineCircle(ln_O2_v, point1, point2))
+	{
+		return 0;
+	}
+	if (point1[1] < point2[1])
+	{
+		girdle[20] = new Point2D(point1[0], point1[1]);
+	}
+	else
+	{
+		girdle[20] = new Point2D(point2[0], point2[1]);		
+	}
+	
+	// Вершина gd8 (girdle[8]) - расположена на окружности cir1 (с центром в точке O1)
+	// Угол gd8 - O1 - O2  составляет 30 угловых градусов 
+	ln1 = new Line2D(O1, new Point2D(O1[0] + Math.cos(30*DEGREE), 
+									 O1[1] + Math.sin(30*DEGREE)));
+	cir1.IntersectionLineCircle(ln1, point1, point2);
+	if (point1[0] > point2[0])
+	{
+		girdle[8] = new Point2D(point1[0], point1[1]);
+	}
+	else
+	{
+		girdle[8] = new Point2D(point2[0], point2[1]);		
+	}
+
+	girdle[24] = new Point2D(0, girdle[0][1] - R1 - Rs1);
+
+	// Остальной рундист
+	var x,y;
+	var Fi1 = Math.atan2((girdle[0][1] - O1[1]), (girdle[0][0] - O1[0]));
+	var Fi2 = Math.atan2((girdle[4][1] - O1[1]), (girdle[4][0] - O1[0]));
+	var ang = Fi2;
+	var dAng = (Fi1 - Fi2) / 4; // Угловой шаг
+
+	var gr1 = Fi1 * 180 / M_PI;
+	var gr2 = Fi2 * 180 / M_PI;
+	var gr12 = dAng * 180 / M_PI;
+
+	// seg1
+	for(i = 3; i > 0; i--)
+	{
+		ang = ang + dAng;
+		x = Math.cos(ang)*R1 + O1[0];
+		if(x < F[0]) // Левее точки пересечения окружностей cir1 и cir3s
+		{
+			// Пересечение прямой с сопрягающей окружностью cir3s
+			var line1 = new Line2D();
+			var vector1 = new Vector2D(Math.cos(ang), Math.sin(ang));
+			line1.CreateLineVectorPoint(vector1, O1);
+			if(!cir3s.IntersectionLineCircle(line1, point1, point2))
+			{
+				return null;
+			}
+			if (point1[1] > point2[1])
+			{
+				x = point1[0];
+				y = point1[1];
+			}
+			else
+			{
+				x = point2[0];
+				y = point2[1];
+			}
+		}
+		else
+		{
+			y = Math.sin(ang)*R1 + O1[1];
+		}
+		girdle[i] = new Point2D(x, y);
+	}
+
+	
+	Fi1 = Math.atan2((girdle[4][1] - O1[1]), (girdle[4][0] - O1[0]));
+	Fi2 = Math.atan2((girdle[8][1] - O1[1]), (girdle[8][0] - O1[0]));
+	ang = Fi2;
+	dAng = (Fi1 - Fi2)/4; // Угловой шаг
+
+	gr1 = Fi1 * 180 / M_PI;
+	gr2 = Fi2 * 180 / M_PI;
+	gr12 = dAng * 180 / M_PI;	
+	
+	for(i = 7; i > 4; i--)
+	{
+		ang = ang + dAng;
+		x = Math.cos(ang)*R1 + O1[0];
+		if(x < F[0]) // Левее точки пересечения окружностей cir1 и cir3s
+		{
+			// Пересечение прямой с сопрягающей окружностью cir3s
+			var line1 = new Line2D();
+			var vector1 = new Vector2D(Math.cos(ang), Math.sin(ang));
+			line1.CreateLineVectorPoint(vector1, O1);
+			if(!cir3s.IntersectionLineCircle(line1, point1, point2))
+			{
+				return null;
+			}			
+			if (point1[1] > point2[1])
+			{
+				x = point1[0];
+				y = point1[1];
+			}
+			else
+			{
+				x = point2[0];
+				y = point2[1];
+			}
+		}
+		else
+		{
+			y = Math.sin(ang)*R1 + O1[1];
+		}
+		girdle[i] = new Point2D(x, y);
+	}
+	
+	Fi1 = Math.atan2((girdle[8][1] - O1[1]), (girdle[8][0] - O1[0]));
+	Fi2 = Math.atan2((girdle[12][1] - O1[1]), (girdle[12][0] - O1[0]));
+	ang = Fi1;
+	dAng = (Fi1 - Fi2)/4; // Угловой шаг
+
+	gr1 = Fi1 * 180 / M_PI;
+	gr2 = Fi2 * 180 / M_PI;
+	gr12 = dAng * 180 / M_PI;	
+	
+	for(i = 9; i < 12; i++)
+	{
+		ang = ang - dAng;
+		y = Math.sin(ang)*R1 + O1[1];
+		if(y < G[1]) // Ниже точки пересечения окружностей cir1 и cir2s
+		{
+			var line1 = new Line2D();
+			var vector1 = new Vector2D(Math.cos(ang), Math.sin(ang));
+			line1.CreateLineVectorPoint(vector1, O1);
+			if(!cir2s.IntersectionLineCircle(line1, point1, point2))
+			{
+				return null;
+			}
+			if (point1[0] > point2[0])
+			{
+				x = point1[0];
+				y = point1[1];
+			}
+			else
+			{
+				x = point2[0];
+				y = point2[1];
+			}
+		}
+		else
+		{
+			x = Math.cos(ang)*R1 + O1[0];
+		}
+		girdle[i] = new Point2D(x, y);
+	}
+	
+	Fi1 = Math.atan2((girdle[12][1] - O1[1]), (girdle[12][0] - O1[0]));
+	Fi2 = Math.atan2((girdle[16][1] - O1[1]), (girdle[16][0] - O1[0]));
+	ang = Fi1;
+	dAng = (Fi1 - Fi2)/4; // Угловой шаг
+
+	gr1 = Fi1 * 180 / M_PI;
+	gr2 = Fi2 * 180 / M_PI;
+	gr12 = dAng * 180 / M_PI;	
+
+	for(i = 13; i < 16; i++)
+	{
+		ang = ang - dAng;
+		y = Math.sin(ang)*R1 + O1[1];
+		if(y < G[1]) // Ниже точки пересечения окружностей cir1 и cir2s
+		{
+			// Пересечение прямой с сопрягающей окружностью cir2s
+			var line1 = new Line2D();
+			var vector1 = new Vector2D(Math.cos(ang), Math.sin(ang));
+			line1.CreateLineVectorPoint(vector1, O1);
+			if(!cir2s.IntersectionLineCircle(line1, point1, point2))
+			{
+				return null;
+			}
+			if (point1[0] > point2[0])
+			{
+				x = point1[0];
+				y = point1[1];
+			}
+			else
+			{
+				x = point2[0];
+				y = point2[1];
+			}
+		}
+		else
+		{
+			x = Math.cos(ang)*R1 + O1[0];
+		}
+		girdle[i] = new Point2D(x, y);
+	}
+	
+	Fi1 = Math.atan2((girdle[16][0] - O3[0]), (O3[1] - girdle[16][1]));
+	Fi2 = Math.atan2((girdle[20][0] - O3[0]), (O3[1] - girdle[20][1]));
+
+	ang = Fi2;
+	dAng = (Fi1 - Fi2)/4; // Угловой шаг
+
+	gr1 = Fi1 * 180 / M_PI;
+	gr2 = Fi2 * 180 / M_PI;
+	gr12 = dAng * 180 / M_PI;
+
+	for(i = 19; i > 16; i--)
+	{
+		ang = ang + dAng;
+		x = Math.sin(ang)*R3 + O3[0];
+		if(x > H[0]) // Правее точки пересечения окружностей cir3 и cir2s
+		{
+			// Пересечение прямой с сопрягающей окружностью cir2s
+			gr1 = ang * 180 / M_PI;	
+			var line1 = new Line2D();
+			var vector1 = new Vector2D(-Math.sin(ang), Math.cos(ang));
+			line1.CreateLineVectorPoint(vector1, O3);
+			if(!cir2s.IntersectionLineCircle(line1, point1, point2))
+			{
+				return null;
+			}
+			if (point1[0] > point2[0])
+			{
+				x = point1[0];
+				y = point1[1];
+			}
+			else
+			{
+				x = point2[0];
+				y = point2[1];
+			}
+		}
+		else
+		{
+			y = - Math.cos(ang)*R3 + O3[1];
+		}
+		girdle[i] = new Point2D(x, y);
+	}
+
+	Fi1 = Math.atan2((girdle[20][0] - O3[0]), (O3[1] - girdle[20][1]));
+	Fi2 = Math.atan2((girdle[24][0] - O3[0]), (O3[1] - girdle[24][1]));
+
+	ang = Fi2;
+	dAng = (Fi1 - Fi2) / 4; // Угловой шаг
+
+	gr1 = Fi1 * 180 / M_PI;
+	gr2 = Fi2 * 180 / M_PI;
+	gr12 = dAng * 180 / M_PI;
+
+	for(i = 23; i > 20; i--)
+	{
+		ang = ang + dAng;
+		x = Math.sin(ang)*R3 + O3[0];
+		if(x > H[0]) // Правее точки пересечения окружностей cir3 и cir2s
+		{
+			// Пересечение прямой с сопрягающей окружностью cir2s
+			gr1 = ang * 180 / M_PI;
+			var line1 = new Line2D();
+			var vector1 = new Vector2D(-Math.sin(ang), Math.cos(ang));
+			line1.CreateLineVectorPoint(vector1, O3);
+			if(!cir2s.IntersectionLineCircle(line1, point1, point2))
+			{
+				return null;
+			}
+			if (point1[0] > point2[0])
+			{
+				x = point1[0];
+				y = point1[1];
+			}
+			else
+			{
+				x = point2[0];
+				y = point2[1];
+			}
+		}
+		else
+		{
+			y = - Math.cos(ang)*R3 + O3[1];
+		}
+		girdle[i] = new Point2D(x, y);
+	}
+
+	for (i = 1; i < 24; i++)
+	{
+		girdle[48-i] = new Point2D(-girdle[i][0], girdle[i][1]);	
+	}
+
+	if (lw != 1)
+	{
+		for(i = 0; i < 48; i++)
+		{
+			girdle[i][1] = lw * girdle[i][1];
+		}
+	}
+}
+</pre>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Octagram/Chapter_27.html"> <span class=brown>Глава 27 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► </span><a href="../Trilliant/Chapter_29.html"> <span class=brown> Глава 29 </span></a>
+</h3>
+
+</body>
+</html>

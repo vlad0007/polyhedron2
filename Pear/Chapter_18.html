@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Chapter 18 - Pear</title>
+	<link rel="stylesheet" type="text/css" href="../libs/style.css">
+	<script src="../libs/run_prettify.js?autoload=true&amp;lang=css" defer=""></script>
+	<script type="text/javascript" src="../libs/three.js"></script>
+	<script type = "text/javascript" src = "../libs/dat.gui.js"></script>
+	<script src = "../libs/OrbitControls.js"></script>
+	<script src = "../libs/WebGeometry.js"></script>
+	<script src = "../libs/polyhedron.js"></script>
+	<script src = "pear_verts.js"></script>
+	<script src = "pear.js"></script>
+	
+	<style>
+		#div_out_big
+		{
+			position: relative;
+			width: 1075px;
+			height: 525px;
+			left: 0px;
+			background-color: #aaffff;
+			border: solid 2px;
+		}
+		#div_in_big
+		{
+			position: absolute;
+			left: 5px;
+			top: 5px;			
+			height: 410px;
+			width: 1145px;
+			background-color: #eeffee;
+			border: solid 2px;
+		}
+		#div_pars_big
+		{
+			position: absolute;
+			left: 530px;
+			top: 2px;			
+			height: 515px;
+			width: 280px;
+			background-color: #eeeeaa;
+			border: solid 2px;
+		}
+		#gui_container_big
+		{
+			position: absolute;
+			left: 820px;
+			top: 5px;
+		}
+	</style>
+</head>
+
+<body>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Pear/Chapter_17.html"> <span class=brown>Глава 17 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► &ensp;</span><a href="../Pear/Chapter_19.html"> <span class=brown> Глава 19  </span></a>
+</h3>
+
+<h2 align = "center"> Three.js и геометрия. &ensp; Глава 18. &ensp;Груша</h2>
+
+<p align="center">В данном разделе мы создадим модель огранки, которая носит название 
+<b><a href="http://diamond3d.ucoz.ru/Pear/Pear_wireframe_trackball.html" 
+target="_blank">груша</a></b>.
+</p>
+<p>
+Огранки типа груша обычно имеют одинаковую форму короны, но могут различаться количеством 
+основных граней павильона и их расположением (рис.<b>1</b>). В этой главе рассматривается построение огранки 
+груша с шестью основными гранями павильона. По ссылке  
+<b><a href="http://diamond3d.ucoz.ru/Dispersion/Pear_D.html" target="_blank">Pear - Light Dispersion</a></b>  
+можно увидеть многогранник "груша" отображенный при помощи кубических карт. При нажатии на приведенной по ссылке 
+странице кнопки <b>Inverse</b> многогранник отобразится на черном фоне.
+</p>
+<p>
+
+<p> 
+
+</p>
+<p>
+
+</p>
+<p>
+<br>
+<div id="div_out_big"> 
+		<canvas id="canvas" width="522" height="522" style="border: 1px solid"></canvas>
+		<div id="div_pars_big" >
+			<canvas id="canvas_pars" width="280" height="480"></canvas>
+
+			<div id="div_input1">
+				<input type="radio" name="numeration" id = "btn_no"  />No
+				&nbsp;&nbsp;&nbsp; <input type="radio" name="numeration" id = "btn_all" />All
+				&nbsp;&nbsp;&nbsp;&nbsp; <input type="radio" name="numeration" id = "btn_cr_gd_pav"  />Cr-Gd-Pav
+			</div>		
+		</div>
+		<div id="gui_container_big" ></div> 
+</div>
+<br>
+<img src = "figure_1.png" class="center-img-rounded" border = "1px" >
+<h3 align = "center"> Нумерация вершин и обозначение граней модели </h3>
+
+<p align="center">На рисунке <b>2</b> приведена нумерация вершин короны, а на рисунке <b>3</b> - павильона.</p>
+
+<img src = "enumeration_pear.png" class="center-img-rounded" border = "1px" >
+
+<h3 align = "center"> Структура данных модели (<b>СДМ</b>) огранки  </h3>
+
+&nbsp; &nbsp; Структура данных модели содержит следующие параметры:
+<pre class="prettyprint" id="quine">
+var lw = 1.5;             // Отношение длины огранки к ее ширине 
+
+     // Форма и толщиа рундиста
+var r = 0.04;             // Толщина рундиста
+var vp = 0.000010;        // Угол, определяющий величину отклонения кривой от окружности
+var Lh = 0.34;            // Отклонение смещения самого широкого места рундиста 
+var square_deviation = 0; // Степень отклонения рундиста от эллипса
+
+     // Корона
+var beta = 35*DEGREE;     // Угол короны
+var t = 0.6;              // Ширина площадки
+var dSquare = 0.00001;    // Задает положение средних вершин короны.
+var vLh = 0.00001;        // Определяет смещение центральной точки огранки 
+
+     // Павильон
+var hp = 0.44;            // Задает глубину павильона
+var hPavFacet = 0.8;      // Определяет положение нижних вершин клиньев павильона
+var CuletX = 0.00001;     // Смещение калетты вдоль оси X
+var CuletY = 0.00001;     // Смещение калетты по оси Y
+
+// Следующие параметры задают положение узловых вершин на рундисте
+// Они подробно рассмотрены в разделе, где рассматривается построение
+// рундиста огранки груша.
+var DelAngGirdle_4 = 0;            // вершины  рундиста 44, 52, 108, 116
+var DelAngGirdle_8 = 0.0*DEGREE;   // вершины  рундиста 40, 56, 104, 120
+var DelAngGirdle_12 = 0.0*DEGREE;  // вершины  рундиста 36, 60, 100, 124
+var DelAngGd_16 = -2.0*DEGREE;     // вершины  рундиста  0, 32,  64,  96
+var DelAngGirdle_20 = 0.0*DEGREE;  // вершины  рундиста  4, 28,  68,  92
+var DelAngGirdle_24 = 0.0*DEGREE;  // вершины  рундиста  8, 24,  72,  88
+var DelAngGirdle_28 = 0.0*DEGREE;  // вершины  рундиста 12, 20,  76,  84
+</pre>
+
+<h3 align = "center"> Построение короны и павильона огранки груша  </h3>
+<p>
+Построение рундиста подробно рассмотрено в предыдущем разделе. Однако, после того как он был расчитан, 
+мы развернули его в горизонтальной плоскости таким образом, чтобы основной диаметр рундиста был направлен вдоль 
+оси <b>Y</b> (разворот на <b>90°</b>).
+Таким образом, например, вершина рундиста <b>16</b> из предыдущей главы превратилась в вершину рундиста с номером <b>0</b>.
+</p>
+<p>
+Внешний вид павильона и короны огранки а также нумерация их вершин показана на рисунках <b>2</b> и <b>3</b> соответственно.
+Построение короны и павильона огранки во многом подобно построению короны и павильона огранки бриллиант. 
+Отличием является то, что в огранке бриллиант павильон имеет восемь основных четырехугольных граней, 
+а у огранки груша таких граней всего семь. <br>
+&nbsp;&nbsp;В огранке груша введен специальный параметр <b>vLh</b>, который имеет соответствующее поле <code>vLh</code> в <b>СДМ</b>. 
+Этот параметр позволяет <em><b>одновременно</b> целиком сдвигать корону и павильон</em> огранки вдоль оси <b>OX</b>. 
+Так как огранка не симметрична относительно вертикальной плоскости <b>OYZ</b>, то такой сдвиг часто полезен 
+при выборе подходящей формы огранки. 
+</p>
+<p> 
+Для того чтобы при изменении удлинения огранки грани <b>B</b>, <b>C</b> и <b>D</b> короны по форме 
+приближались к ромбу поступим следующим образом. После расчета положения всех вершин короны тем же способом, 
+что был использован для этой цели в огранке бриллиант,  производится корректировка положения вершин 
+<b>7, 0</b> и <b>1</b> короны (рис.<b>2</b>). Данная корректировка осуществляется следующим способом. 
+Через середину отрезка соединяющего вершины <b>14</b> и <b>15</b> короны проводится вертикальная плоскость. 
+Новое положение вершины <b>7</b> находится как точка пересечения проведенной вертикальной плоскости, 
+плоскости в которой лежит грань <b>B</b> и плоскости  которой принадлежит площадка. 
+Точно таким же образом производится корректировка положения вершин <b>0</b> и <b>1</b> короны.<br>
+&nbsp;&nbsp;Исходный текст расчета вершин многогранника находится в файле <b>pear_verts.js</b>.
+</p>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Pear/Chapter_17.html"> <span class=brown>Глава 17 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► &ensp;</span><a href="../Pear/Chapter_19.html"> <span class=brown> Глава 19  </span></a>
+</h3>
+
+</body>
+</html>

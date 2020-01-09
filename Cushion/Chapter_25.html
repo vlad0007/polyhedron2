@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Chapter 25 - Cushion girdle (part 3)</title>
+	<link rel="stylesheet" type="text/css" href="../libs/style.css">
+	<script src="../libs/run_prettify.js?autoload=true&amp;lang=css" defer=""></script>
+	<script type="text/javascript" src="../libs/three.js"></script>
+	<script type = "text/javascript" src = "../libs/dat.gui.js"></script>
+	<script src = "../libs/OrbitControls.js"></script>
+	<script src = "../libs/WebGeometry.js"></script>
+	<script src = "../libs/polyhedron.js"></script>
+	<script src = "girdle2_verts.js"></script>
+	<script src = "girdle2.js"></script>
+	
+	<style>
+		#div_out_big
+		{
+			position: relative;
+			width: 1075px;
+			height: 525px;
+			left: 0px;
+			background-color: #aaffff;
+			border: solid 2px;
+		}
+		#div_in_big
+		{
+			position: absolute;
+			left: 5px;
+			top: 5px;			
+			height: 410px;
+			width: 1145px;
+			background-color: #eeffee;
+			border: solid 2px;
+		}
+		#div_pars_big
+		{
+			position: absolute;
+			left: 530px;
+			top: 2px;			
+			height: 515px;
+			width: 280px;
+			background-color: #eeeeaa;
+			border: solid 2px;
+		}
+		#gui_container_big
+		{
+			position: absolute;
+			left: 820px;
+			top: 5px;
+		}
+	</style>
+</head>
+
+<body>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Cushion/Chapter_24.html"> <span class=brown>Глава 24 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► &ensp;</span><a href="../Maltese/Chapter_26.html"> <span class=brown> Глава 26  </span></a>
+</h3>
+
+<h2 align = "center"> Three.js и геометрия.  &ensp; Глава 25. &ensp; Построение рундиста огранки имеющей рундист в форме "подушки" (<em>cushion</em>). часть 3  </h2>
+
+<p>Иногда желательно при изменении размеров площадки огранки соответствующим образом менять
+размеры сегментов рундиста. При таком подходе к построению огранки она зачастую приобретает более красивый вид
+чем при независмом делении рундиста на сегменты. По приведенной <em>online</em>-программе можно проследить взаимосвязь короны
+и рундиста огранки.
+</p>
+
+<div id="div_out_big"> 
+		<canvas id="canvas" width="522" height="522" style="border: 1px solid"></canvas>
+		<div id="div_pars_big" >
+			<canvas id="canvas_pars" width="280" height="480"></canvas>
+			<div id="div_input">
+				                     <input type="radio" name="numeration" id = "btn_no"  />No
+				&nbsp&nbsp&nbsp&nbsp <input type="radio" name="numeration" id = "btn_all" />All
+				&nbsp&nbsp&nbsp&nbsp <input type="radio" name="numeration" id = "btn_cr_gd_pav"  />Cr-Gd-Pav
+			</div>		
+		</div>
+		<div id="gui_container_big" ></div> 
+</div>
+<p>
+При способе построения этой огранки, который мы будем использовать, при изменении удлинения огранки вид рундиста 
+и короны должен меняться таким образом, чтобы форма граней <b>C</b> и <b>B</b> оставалась неизменной, 
+а грань <b>A</b> растягивалась или сжималась вдоль оси <b>OX</b> соответственно с изменением значения удлинения огранки. 
+Для  того чтобы выполнить указанное требование построение короны и рундиста огранки должно производиться 
+одновременно – так как их внешний вид является взаимозависимым. Форма огранки при трех различных значениях 
+параметра <b>Girdle ratio</b> показана на рисунке <b>1</b>.
+</p>
+<img src = "png_01.png" class="center-img-rounded" border = "1px">
+<p>
+На рисунке <b>2</b> показаны геометрические построения, используемые при расстановке вершин на рундисте и короне. 
+Построение начинается с расчета формы рундиста, которое осуществляется точно таким же образом, как это было сделано в предыдущей главе.
+Однако расстановка вершин на рундисте делается совершенно иначе. 
+</p>
+
+<p>
+Первое, что мы для этого сделаем – это построим вспомогательную окружность <b><em>cir4</em></b>. Эта окружность поможет найти  размеры угловых сегментов рундиста.  
+Определим сначала положение центра <b>O4</b> этой окружности. Координаты центра окружности <b>O4</b> являются одновременно координатами <b>x</b> и <b>y</b> 
+вершины рундиста <b>8</b>. При определении значения радиуса окружности <b><em>cir4</b></em> используется значение параметра 
+<b>dr</b>, которому в <b>СДМ</b> соответствует поле <code>dr</code>. Этот параметр можно использовать для изменения относительных размеров сегментов рундиста.
+</p>
+<img src = "png_02.png" class="center-img-rounded" border = "1px">
+<p>
+Зная координаты точек <b>P1, P2, O4</b>, а также значения координат вершин <b>0</b> и <b>1</b> короны, можно составить уравнения плоскостей, 
+в которых лежат главные четырехугольные грани короны <b>A, B</b> и <b>C</b>. Уравнения этих плоскостей создаются по трем принадлежащим им точкам. 
+Ниже приведена та часть исходного кода функции <code>InitGirdle</code>, в которой находятся уравнения плоскостей, 
+в которых лежат грани <b>A, B</b> и <b>C</b> короны. При нахождении уравнений учитываем, что высота короны <b>h_crown</b> равна величине 
+<br>
+&emsp;&emsp; <code>h_crown = tan(угол_короны) ∙ (1 – ширина_площадки) / 2</code>
+<br>
+Следующим шагом является определение уравнения линии пересечения плоскостей – с одной стороны плоскостей граней <b>A</b> и <b>C</b>, 
+а с другой стороны – граней <b>B</b> и <b>C</b>. На рисунке <b>2</b> эти линии обозначены как <b>line_AC</b> и <b>line_BC</b> соответственно.
+
+</p>
+<pre class="prettyprint" id="quine">
+	// Главные четырехугольные грани короны
+	// Конструируем плоскость в которой лежит грань A
+	var planeA = new Plane3D();
+	planeA.CreatePlaneThreePoints(crown[0],
+	                              new Point3D(0, 0.5, r/2),
+	                              new Point3D(P1[0], P1[1], h_crown + r/2));
+
+	// Конструируем плоскость в которой лежит грань B
+	var planeB = new Plane3D();
+	planeB.CreatePlaneThreePoints(crown[2],
+	                              new Point3D(lw/2, 0.0, r/2),
+	                              new Point3D(P2[0], P2[1], h_crown + r/2));
+
+	// Конструируем плоскость в которой лежит грань C
+	var planeC = new Plane3D();
+	planeC.CreatePlaneThreePoints(new Point3D(P1[0], P1[1], h_crown + r/2),
+	                              new Point3D(P2[0], P2[1], h_crown + r/2),
+	                              new Point3D(O4[0], O4[1], r/2));	
+	
+	// Конструируем линию пересечения плоскостей A и C
+	var vector = planeA.VectorIntersectionTwoPlanes(planeC);
+	var vector_AC = new Vector2D(vector[0], vector[1]);
+	vector_AC.Normer();	
+	var line_AC = new Line2D();
+	line_AC.CreateLineVectorPoint(vector_AC, P1);
+	
+	// Конструируем линию пересечения плоскостей B и C
+	vector = planeB.VectorIntersectionTwoPlanes(planeC);
+	var vector_BC = new Vector2D(vector[0], vector[1]);
+	vector_BC.Normer();
+	var line_BC = new Line2D();
+	line_BC.CreateLineVectorPoint(vector_BC, P2);	
+	
+</pre>
+<p>
+Далее поступим следующим образом – введем параметр огранки, которому дадим название <b>ratio</b>. В <b>СДМ</b> этому параметру соответствует 
+одноименное поле <code>ratio</code>. Рассмотрим отрезок соединяющий точки <b>P0</b> и <b>O4</b>. Будем рассматривать значение <code>ratio</code> как отношение, 
+в котором оно делит длину отрезка <b>P0 - O4</b>. В результате этого деления получаются два отрезка – <b>P0 - P4</b> и <b>P4 - O4</b>. 
+Иными словами значение <code>ratio</code> задает положение точки <b>P4</b> на отрезке <b>P0 - O4</b>. 
+Проведем еще одну прямую – <b>line_P4</b>. Она должна проходить через точку <b>P4</b> и быть параллельной прямой, 
+проходящей через ранее найденные точки <b>P1</b> и <b>P2</b>. Следом за этим найдем точки <b>A</b> и <b>B</b> пересечения прямой <b>line_P4</b> 
+с <em><b>проекциями</b></em> на горизонтальную плоскость прямых <b>line_AC</b> и <b>line_BC</b>. Так как эти точки лежат на проекциях прямых <b>line_AC</b> и 
+<b>line_BC</b> то поэтому их и обозначили как <b>A</b> и <b>B</b>. 
+Напомним, что по этим прямым пересекаются плоскости, в которых лежат грани короны <b>A</b>, <b>B</b> и <b>C</b>. 
+Найденные точки <b>A</b> и <b>B</b> будем рассматривать как <em><b>проекции</b></em> вершин короны <b>8</b> и <b>9</b> на горизонтальную плоскость <b>OXY</b>.  
+Для нахождения высоты, на которой расположены сами трехмерные точки имеющие проекции <b>A</b> и <b>B</b>, проведем через <b>A</b> и <b>B</b> прямые 
+перпендикулярные к плоскости <b>OXY</b>. Точки пересечения этих прямых с плоскостями, в которых лежат грани короны <b>A</b> и <b>B</b> 
+и определят координаты по оси <b>OZ</b> вершин короны <b>8</b> и <b>9</b>. Следовательно, 
+значение параметра <code>ratio</code> определяет положение вершин короны <b>8</b> и <b>9</b>. 
+Таким образом, мы рассчитали координаты всех вершин короны для одной четверти огранки. Это вершины обозначены числами <b>0, 1, 2, 8</b> и <b>9</b>.
+Нажав в <em>online</em>-программе переключатель <b>Cr-Gd-Par</b> можно увидеть нумерацию вершин короны (вершины короны отобразятся красным цветом). 
+</p>
+<pre class="prettyprint" id="quine">
+	// Точка P4 может двигаться по прямой между точками P0 и O4
+	var P4 = new Point2D();
+	P4[0] = P0[0] * ratio + (1 - ratio) * O4[0];
+	P4[1] = P0[1] * ratio + (1 - ratio) * O4[1];
+	// Прямая параллельная прямой P1 - P2 и проходящая через точку P4
+	var line_P4 = new Line2D();
+	line_P4.CreateLineVectorPoint(new Vector2D(P1[0] - P2[0], P1[1] - P2[1]), P4);
+	
+	//   Находим точки пересечения найденной только что прямой line_P4
+	// с проекциями линий пересечения плоскостей line_AC и line_BC
+	var A = line_AC.IntersectionTwoLines(line_P4); 
+	var B = line_BC.IntersectionTwoLines(line_P4); 
+	
+	// Конструируем вершины звезды короны
+	var Z1 = new Vector3D(0,0,1); // Вертикально направленный единичный вектор
+
+	var lineVert_A = new Line3D(); // Вертикальная прямая проходящая через точку A
+	lineVert_A.CreateLineVectorPoint(Z1, new Point3D(A[0], A[1], 0));
+	crown[8] = lineVert_A.IntersectionLinePlane(planeA);
+
+	var lineVert_B = new Line3D(); // Вертикальная прямая проходящая через точку B
+	lineVert_B.CreateLineVectorPoint(Z1, new Point3D(B[0], B[1], 0));
+	crown[9] = lineVert_B.IntersectionLinePlane(planeB);
+</pre>
+<p>
+Определим координаты точек <b>S</b> и <b>V</b> лежащих на границах угловых сегментов рундиста огранки. 
+Для этого проводим одну прямую проходящую через точки <b>O1</b> и <b>A</b>, а другую прямую – через точки <b>O2</b> и <b>B</b>. 
+Точки пересечения этих прямых с линией рундиста определят граничные точки угловых сегментов. 
+Координаты <b>x</b> и <b>y</b> точки <b>S</b> соответствует координатам вершины рундиста <b>4</b> в горизонтальной плоскости, 
+а координаты <b>x</b> и <b>y</b> точки <b>V</b> соответствует координатам вершины рундиста <b>12</b> в горизонтальной плоскости.
+Таким образом, нами определены координаты всех узловых вершин рундиста <b>0, 4, 8, 12</b> и <b>16</b> для одной его четверти. 
+Перед этим мы уже нашли координаты вершин <b>0, 1, 2, 8</b> и <b>9</b> короны. Координаты остальных узловых вершин рундиста 
+и координаты остальных вершин короны можно найти исходя из соображений симметрии огранки относительно плоскостей <b>OXZ</b> и <b>OYZ</b>.
+Дальнейшие действия по делению каждого из полученных сегментов рундиста на четыре части 
+подобны уже рассмотренным действиям при построении предыдущего рундиста огранки "подушка".
+</p>
+<pre class="prettyprint" id="quine">
+	// Вычисляем вершины рундиста со стороны короны
+	// Прежде всего вычисляем координаты узловых вершин рундиста 
+	girdle[0] = new Point3D();
+	girdle[0][0] = 0;
+	girdle[0][1] = 0.5;
+	girdle[0][2] = r/2;
+	
+	// Точки s и v определяют границу сегментов рундиста
+	// Точки лежащие на границе сегментов seg1 и seg2
+	              // и также на границе сегментов seg3 и seg4
+
+	// Уравнение прямой проходящей через центр большей окружности O1 и точку A
+	var line_O1_A = new Line2D(O1, A);
+
+	if(!cir1.IntersectionLineCircle(line_O1_A, point1, point2))
+	{
+		return null;
+	}
+	var s = new Point2D()
+	if (point1[1] > point2[1])
+	{
+		s[0] = point1[0]; s[1] = point1[1];
+	}
+	else
+	{
+		s[0] = point2[0]; s[1] = point2[1];			
+	}	
+
+	girdle[4] = new Point3D();
+	girdle[4][0] = s[0];
+	girdle[4][1] = s[1];
+	girdle[4][2] = r/2;
+	
+	girdle[8] = new Point3D();
+	girdle[8][0] = O4[0];
+	girdle[8][1] = O4[1];
+	girdle[8][2] = r/2;
+
+	// Уравнение прямой проходящей через центр меньшей окружности O2 и точку B
+	var line_O2_B = new Line2D(O2, B);
+
+	if(!cir2.IntersectionLineCircle(line_O2_B, point1, point2))
+	{
+		return null;
+	}
+	var v = new Point2D()
+	if (point1[0] > point2[0])
+	{
+		v[0] = point1[0]; v[1] = point1[1];
+	}
+	else
+	{
+		v[0] = point2[0]; v[1] = point2[1];			
+	}
+
+	girdle[12] = new Point3D();
+	girdle[12][0] = v[0];
+	girdle[12][1] = v[1];
+	girdle[12][2] = r/2;
+
+	girdle[16] = new Point3D();
+	girdle[16][0] = lw/2;
+	girdle[16][1] = 0;
+	girdle[16][2] = r/2;
+</pre>
+<p> 
+Единственное отличие заключается в том, что, так как положение вершин короны <em>уже определено</em>, 
+нам следует найти значения координаты <b>z</b> каждой вершины огранки со стороны короны 
+(раньше при расчете рундиста других моделей огранок, до его корректировки по высоте, 
+мы полагали его равным значению <code>толщина_рундиста/2</code>). 
+Для нахождения этих координат мы строим плоскости, в которых лежат грани короны, примыкающие к рундисту, 
+и протыкаем каждую такую плоскость вертикальными прямыми, исходящими из найденных точек проекций вершин 
+рундиста на горизонтальную плоскость. Высота, на которой происходит протыкание, определит координату <b>z</b> 
+соответствующей вершины рундиста лежащей между его узловыми вершинами. Таким образом корректировка вершин рундиста
+по высоте со стороны короны входит непосредственно и изначально в расчет рундиста.
+Для узловых вершин рундиста высота, на которой они расположены, равна значению <code>толщина_рундиста/2</code>.
+</p>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Cushion/Chapter_24.html"> <span class=brown>Глава 24 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► </span><a href="../Maltese/Chapter_26.html"> <span class=brown> Глава 26  </span></a>
+</h3>
+
+</body>
+</html>

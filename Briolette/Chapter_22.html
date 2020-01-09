@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Chapter 22 - Briolette</title>
+	<link rel="stylesheet" type="text/css" href="../libs/style.css">
+	<script src="../libs/run_prettify.js?autoload=true&amp;lang=css" defer=""></script>
+	<script type="text/javascript" src="../libs/three.js"></script>
+	<script type = "text/javascript" src = "../libs/dat.gui.js"></script>
+	<script src = "../libs/OrbitControls.js"></script>
+	<script src = "../libs/WebGeometry.js"></script>
+	<script src = "../libs/polyhedron.js"></script>
+	<script src = "briolette_verts.js"></script>
+	<script src = "briolette.js"></script>
+	
+	<style>
+		#div_out_big
+		{
+			position: relative;
+			width: 1075px;
+			height: 525px;
+			left: 0px;
+			background-color: #aaffff;
+			border: solid 2px;
+		}
+		#div_in_big
+		{
+			position: absolute;
+			left: 5px;
+			top: 5px;			
+			height: 410px;
+			width: 1145px;
+			background-color: #eeffee;
+			border: solid 2px;
+		}
+		#div_pars_big
+		{
+			position: absolute;
+			left: 530px;
+			top: 2px;			
+			height: 515px;
+			width: 280px;
+			background-color: #eeeeaa;
+			border: solid 2px;
+		}
+		#gui_container_big
+		{
+			position: absolute;
+			left: 820px;
+			top: 5px;
+		}
+	</style>
+</head>
+
+<body>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Heart/Chapter_21.html"> <span class=brown>Глава 21 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► &ensp;</span><a href="../Cushion/Chapter_23.html"> <span class=brown> Глава 23  </span></a>
+</h3>
+
+<h2 align = "center"> Three.js и геометрия.  &ensp; Глава 22. &ensp; Бриолет (<em>Briolette</em>)</h2>
+
+
+<p align="center">В данном разделе мы создадим модель огранки бриолет (<em>briolette</em>).</p>
+<p>
+Одна из древнейших видов грушевидной огранки драгоценных камней называется "бриолет" – искаженный вариант 
+французского слова "бриньолет" (<em>brignolette</em>), которое означает "сушеная слива из Бриньоля".
+Внешний вид стандартной огранки бриолет показан на рисунке <b>1</b>.
+Она имеет <b>56</b> граней и по форме напоминает каплю или грушу.  Расположение граней присутствующее в бриолете 
+можно найти в огранках "роза" и "двойная роза". В отличие от других огранок бриолет нелзя разделить на части 
+принадлежащие короне, павильону или рундисту. Эта огранка представляет собой единое целое.
+</p>
+<img src = "standart.png" class="center-img-rounded" border = "1px" >
+<p>
+В данном разделе мы построим модель огранки, имеющую больше граней, чем имеет их стандартный бриолет. 
+Создаваемый нами 
+<b><a href="http://diamond3d.ucoz.ru/BrioletteA/BrioletteA_wireframe_trackball.html" target="_blank">многогранник</a></b>.
+будет иметь <b>209</b> граней. Также предусмотрим возможность, 
+в зависимости от значения соответствующих параметров, существенно изменять форму модели 
+огранки – особенно вблизи острия огранки и в противоположной острию ее части. 
+По ссылке  <b><a href="http://diamond3d.ucoz.ru/Dispersion/BrioletteA_D.html" target="_blank">Briolette - Light Dispersion</a></b>  
+можно увидеть бриолет отображенный при помощи кубических карт. При нажатии на приведенной по ссылке 
+странице кнопки <b>Inverse</b> многогранник отобразится на черном фоне. 
+Можно посмотреть в окружении кубических карт и на представителя другого типа этих многогранников - так называемый
+<b><a href="http://diamond3d.ucoz.ru/Dispersion/BrioletteB_D.html" target="_blank">ступенчатый бриолет</a></b> 
+</p> 
+<p>
+У огранок бриолет, кроме тех, которые имеют название крестовая роза, все грани имеют треугольную форму. 
+У бриолета, который мы создадим, при исходном значении набора параметров огранки грани, 
+примыкающие к острию, выглядят также как у крестовой розы. Однако изменяя значение параметров 
+огранки можно четырехугольные грани, сходящиеся к острию, превратить в треугольные путем увеличения значения
+параметра <code>h_facet_ratio</code>. При этом и эта часть огранки станет выглядеть также как у стандартного бриолета. 
+Нумерация вершин острой части создаваемой огранки показана на рисунке <b>2</b>, а тупой ее части – на рисунке <b>3</b>. 
+На рисунке <b>2</b> ось <b>OZ</b> огранки направлена в сторону наблюдателя, а на рисунке <b>3</b> – вглубь рисунка.
+</p>
+<p>
+
+</p>
+<p>
+<br>
+<div id="div_out_big"> 
+		<canvas id="canvas" width="522" height="522" style="border: 1px solid"></canvas>
+		<div id="div_pars_big" >
+			<canvas id="canvas_pars" width="280" height="480"></canvas>
+
+			<div id="div_input1">
+				&nbsp;
+				<input type="radio" name="numeration" id = "btn_no"  />No enumeration
+				&nbsp;&nbsp;
+				<input type="radio" name="numeration" id = "btn_all" />Enumeration
+			</div>		
+		</div>
+		<div id="gui_container_big" ></div> 
+</div>
+<h3 align = "center"> Нумерация вершин и обозначение граней модели </h3>
+
+<p align="center">На рисунках <b>2</b> и <b>3</b> приведена нумерация вершин бриолета.</p>
+
+<img src = "enumeration.png" class="center-img-rounded" border = "1px" >
+
+<h3 align = "center"> Структура данных модели (<b>СДМ</b>) огранки  </h3>
+
+&nbsp; &nbsp; Структура данных модели содержит следующие параметры:
+<pre class="prettyprint" id="quine">
+var lw = 1.8; // Коэффициент растяжения огранки вдоль оси OZ.
+var vp = 0.0; // Угол, определяющий степень отклонения кривой Ellipse_2 от окружности.
+		// Смотри построение рундиста огранки маркиз. 
+var Lh = 0.34; // Отклонение смещения самого широкого места.
+		// Смотри построение огранки груша.
+var kY = 0.8; // Коэффициент растяжения огранки вдоль оси OY
+var square_deviation = 0.0001; // Задает степень отклонения овала, определяющего 
+				// форму огранки в поперечном сечении, от эллипса
+var alpha_1 = 28*DEGREE; // Первый угол определяющий положение вершин на Ellipse_1
+var alpha_2 = 62*DEGREE; // Второй угол определяющий положение вершин на Ellipse_1
+var beta_1 = 11*DEGREE;  // Первый угол определяющий положение вершин на Ellipse_2
+var beta_2 = 22*DEGREE;  // Второй угол определяющий положение вершин на Ellipse_2
+var beta_3 = 33*DEGREE;  // Третий угол определяющий положение вершин на Ellipse_2
+var gamma_1 = 2 * 90*DEGREE / 8; // Первый угол определяющий положение вершин на овале
+var gamma_2 = 4 * 90 * DEGREE / 8; // Второй угол определяющий положение вершин на овале
+var gamma_3 = 6 * 90 * DEGREE / 8; // Третий угол определяющий положение вершин на овале
+
+var h_facet_ratio = 0.5; // Определяет положение вершин ближайших к острию
+var flank_size = 0.1;    // Задает размер среза на тупой части огранки
+</pre>
+
+<h3 align = "center"> Расчет положения вершин огранки  </h3>
+<p>
+Рассмотрим рисунке <b>4</b>, на котором изображен бриолет и обозначены восемь вершин определяющих его контур 
+в продольном направлении. Как можно видеть, эти вершины вписаны в линию подобную той, 
+которую мы строили при создании рундиста груши.
+</p>
+<img src = "angles_1.png" class="center-img-rounded" border = "1px" >
+<p> 
+Возвращаясь к рисунку <b>3</b> того раздела, где рассматривалось построение рундиста груши, 
+нетрудно увидеть, что вершины <b>1, 2, 3</b> и <b>4</b> принадлежат кривой <em><b>Ellipse_1</b></em>, 
+а вершины <b>4, 5, 6, 7</b> и <b>8</b> – кривой <em><b>Ellipse_2</b></em> (вершина <b>4</b> является точкой сопряжения двух кривых). 
+Из рисунка <b>5</b> следует, что тупая часть бриолета, чей контур задается кривой <em><b>Ellipse_1</b></em>, 
+разбита на три яруса, а острая часть, чей контур задается кривой <em><b>Ellipse_2</b></em>, разделена на четыре яруса граней. 
+Для определения положения этих ярусов введены пять параметров огранки  – <b>Angle alpha 1</b>,
+<b>Angle alpha 2</b>, <b>Angle beta 1</b>, <b>Angle beta 2</b> и <b>Angle beta 3</b>, 
+смысл которых понятен из рассмотрения приведенных рисунков. На рисунке эти параметры обозначенны 
+как  <b>α<sub>1</sub></b>, <b>α<sub>2</sub></b>, <b>β<sub>1</sub></b>,  <b>β<sub>2</sub></b> и <b>β<sub>3</sub></b>.  
+Первые два параметра задают деление на части кривой <em><b>Ellipse_1</b></em>, и, 
+следовательно, соответствующее деление тупой части бриолета. Три последних параметра определяют 
+деление кривой <em><b>Ellipse_2</b></em> на заостренной части бриолета. В структуру данных модели (<b>СДМ</b>) введены пять полей 
+соответствующие этим параметрам. Это поля – <code>alpha_1</code>, <code>alpha_2</code>, 
+<code>beta_1</code>, <code>beta_2</code> и <code>beta_3</code>. 
+Размер грани расположенной на срезе (самая левая часть огранки на рисунке <b>5</b>) 
+задается параметром <b>Flank size</b>. Этому параметру соответствует поле <code>flank_size</code> в <b>СДМ</b>.
+</p>
+&nbsp;&nbsp;На следующем листинге показан исходный текст функции SetPoints_Ellipse_1, 
+которая вычисляет координаты точек <b>2</b> и <b>3</b> (эти точки показаны на рисунках <b>4</b> и <b>5</b>). 
+<pre class="prettyprint" id="quine">
+function SetPoints_Ellipse_1(nPoints, angles)
+{
+	//  Описание локальныых переменных <b>v</b> и <b>g</b> 
+	// можно найти в разделе посвященном рундисту груши.
+	var v = lw * Lh - 0.5;
+	var g = 1.0 + v + v;
+	if ( v < 0 ) 
+	{
+		return 0;
+	}
+	var i;
+	var arc = [];
+	for (i = 0; i < nPoints; i++)
+	{
+		arc[i] = new Point3D(Math.cos(angles[i]), 0.0, g * Math.sin(angles[i]));
+	}
+	return arc; 
+}
+</pre>
+<p>
+Значения углов <code>alpha_1</code> и <code>alpha_2</code> передаются в функцию <code>SetPoints_Ellipse_1</code> в массиве <code>angles</code>, 
+который состоит из двух элементов (значение аргумента функции <code>nPoints</code> передаваемое в функцию равно <b>2</b>). 
+Координаты точек <b>2</b> и <b>3</b>, показанных на рисунках <b>4</b> и <b>5</b>, функция возвращает в массиве <code>arc</code>.  
+Названия локальных переменных внутри функции <code>SetPoints_Ellipse_1</code> и их смысл совпадает с названиями переменных 
+и их смыслом в функции расчета вершин рундиста груши. Размер одной полуоси эллипса <b><em>Ellipse_1</em></b> равен <b>g</b>
+а размер другой полуоси равен <b>1</b>).
+</p>
+&nbsp;&nbsp;Исходный текст функции <code>SetPoints_Ellipse_2</code>, которая вычисляет 
+координаты точек <b>4, 5, 6</b> и <b>7</b> приведен на следующем истинге:
+<pre class="prettyprint" id="quine">
+function SetPoints_Ellipse_2 ( nPoints, // количество точек на дуге эллипса (= 4)
+							   angles)  // заданные значения углов 0*DEGREE, beta_1 . . . beta_4 
+{
+	var v = lw * Lh - 0.5;
+	var g = 1.0 + v + v;
+	if ( g < 0 ) 
+	{
+		return null;
+	}
+	
+	var u = 2 * lw - g;
+	if ( u < 0 )
+	{
+		return null;
+	}
+	
+		//      Замечание:
+		//  Координата Z острия огранки, обозначенная в VerticesCalculation() как max_point_Z
+		//  вычисляется также снаружи данной функции
+		//      var max_point_Z = u; 		
+
+	// Угол носика груши без внешней добавки
+	// Без внешней добавки имеем окружность, а не эллипс
+	var fi = Math.asin ( ( u + u ) / ( u * u + 1.0) );
+
+	// Угол носика груши с внешней добавкой
+	var psi = fi + vp;
+	if ( psi >= Math.PI/2 )
+	{
+		null;
+	}
+	// Расстояние по оси OX от начала координат до точки,
+	// где касательная к груши пересекает ось OX
+	var t = u * Math.tan(psi);
+	if ( t <= 2.0)
+	{
+		null;
+	}
+	// Полуось эллипса (смотри создание рундиста груши и
+	// курсы аналитической геометрии)
+	var a = ( t - 1.0 ) / ( t - 2.0 );
+	
+	// Координата x центра эллипса
+	var s = a - 1.0;
+	
+	// После долгих (смотри раздел с рундистом груши) вычислений находим вторую ось эллипса
+	var b = - u * ( 1.0- t ) / Math.sqrt ( t * t - ( t + t ) );
+
+	var arc = [];
+	var i;
+	for (i = 0; i < nPoints; i++)
+	{
+		arc[i] = new Point3D(a * Math.cos(angles[i]) - s, 0.0, b * Math.sin(angles[i]));
+	}
+    return arc;
+}
+</pre>
+<p>
+При помощи параметра <b>Lh</b> (этот параметр имеет одноименное поле <code>Lh</code> в <b>СДМ</b>), 
+можно также как и в огранке груша, изменять относительные размеры тупой и острой частей огранки. 
+</p>
+<p>
+Для изменения положения граней в плоскости перпендикулярной оси огранки используются 
+параметры параметра <b>Angle gamma 1</b>, <b>Angle gamma 2</b> и <b>Angle gamma 3</b>. 
+В <b>СДМ</b> этим параметрам соответствуют поля <code>gamma_1</code>, <code>gamma_2</code> и 
+<code>gamma_3</code>. На рисунке 6 показано как значения этих параметров, обозначенные как <b>γ<sub>1</sub></b>, 
+<b>γ<sub>2</sub></b> и <b>γ<sub>3</sub></b>, связаны с геометрией огранки.
+</p>
+<img src = "angles_2.png" class="center-img-rounded" border = "1px" >
+<br>
+&nbsp;&nbsp;На листинге показан исходный текст функции <code>SetPoints_Oval</code>, в которой производится 
+вычисление координат девяти точек эллипса:
+<pre class="prettyprint" id="quine">
+function SetPoints_Oval(
+			nPoints, // количество точек на дуге эллипса (= 9)
+			angles) // заданные значения углов gamma_1, gamma_2 и gamma_3
+{
+	if ( square_deviation < -1 || square_deviation >= 0.995 )
+		return null;
+
+	var p = 2 / ( 1 - square_deviation );
+	var x, y, w;
+	var arc = [];
+	var i;
+	for (i = 0; i < nPoints; i++)
+	{
+		x = Math.cos(angles[i]);
+		y = Math.sin(angles[i]);
+		w = Math.pow (Math.abs (x), p) + Math.pow (Math.abs (y), p);
+		w = 1 / Math.pow ( w, 1/p );
+		arc[i] = new Point2D(w * x, kY * w * y);
+	}
+	return arc; 
+}
+</pre>
+<p> 
+Только координаты четырех из этих точек совпадают с координатами четырех вершин огранки 
+огранки – <b>65, 66, 67</b> и <b>68</b>. Эти вершины лежат в том в том месте огранки, 
+где она имеет максимальный диаметр.  Координаты остальных вершин огранки определяются 
+умножением полученных значений на значения, полученные в результате вызова пары функций 
+<code>SetPoints_Ellipse_1</code> и <code>SetPoints_Oval</code> или функций 
+<code>SetPoints_Ellipse_2</code> и <code>SetPoints_Oval</code>.
+</p>
+Исходный текст функции <code>VerticesCalculation</code>, в которой вычисляются координаты всех вершин бриолета, 
+можно найти в файле <b>briolette_verts.js</b>. Особое внимание следует обратить на ту часть исходного текста, 
+в которой находятся уравнения плоскостей, в которых лежат четырехугольные грани, 
+сходящиеся в острие огранки. Для определения направления векторов, 
+используемых при нахождении уравнений этих плоскостей, используется свойство касательной к эллипсу, 
+которое заключается в том, что произведение координаты проекции точки касания на ось эллипса 
+и значение координаты точки пересечения касательной с этой осью, 
+равно значению квадрата соответствующей полуоси эллипса (строки <b>260 - 325</b> файла <b>briolette_verts.js</b>).
+
+<h3 align = "center"> Краткое резюме </h3>
+<p> 
+В данном разделе приведен пример построения только одного, но, пожалуй, самого сложного, варианта огранки бриолет. 
+Обычно другие варианты огранки бриолет имеют меньшее количество граней, и, используя, как пример, 
+приведенное построение можно создать огранки бриолет с другим количеством граней и их взаимным расположением. 
+Пример такой огранки, в которой вместо треугольных фасет, везде, кроме крайних противоположных частей огранки, 
+используются прямоугольные грани, приведен на рисунке <b>7</b>. Эту огранку можно назвать 
+<b><a href="http://diamond3d.ucoz.ru/BrioletteB/BrioletteB_wireframe_trackball.html" target="_blank">ступенчатым бриолетом</a></b>.
+Ступенчатый бриолет отображенный при помощи кубических карт 
+<b><a href="http://diamond3d.ucoz.ru/Dispersion/BrioletteB_D_Inverse.html" target="_blank">Briolette - Light Dispersion</a></b> 
+</p>
+<img src = "step.png" class="center-img-rounded" border = "1px" >
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Heart/Chapter_21.html"> <span class=brown>Глава 21 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► </span><a href="../Cushion/Chapter_23.html"> <span class=brown> Глава 23  </span></a>
+</h3>
+
+</body>
+</html>

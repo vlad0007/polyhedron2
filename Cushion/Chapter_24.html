@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Chapter 24 - Cushion girdle (part 2)</title>
+	<link rel="stylesheet" type="text/css" href="../libs/style.css">
+	<script src="../libs/run_prettify.js?autoload=true&amp;lang=css" defer=""></script>
+	<script type = "text/javascript" src = "../libs/dat.gui.js"></script>
+	<script src="../libs/WebGeometry.js"></script>
+	<script src="../libs/canvas2D.js"></script>
+	<script src="girdle1_B.js"></script>
+
+	<style>
+		div.out_girdle
+		{
+			position: relative;
+			width: 900px;
+			height: 600px;
+			left: 5px;
+			background-color: #ffffff;
+			border: solid 2px;
+		}
+		
+		div.gui_girdle
+		{
+			position: absolute;
+			left: 0px;
+			top: 505px;	
+			height: 90px;
+			width: 900px;
+			background-color: #eeeeee;
+			border: solid 1px;
+		}
+	</style>
+
+</head>
+
+<body>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Cushion/Chapter_23.html"> <span class=brown>Глава 23 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► &ensp;</span><a href="../Cushion/Chapter_25.html"> <span class=brown> Глава 25  </span></a>
+</h3>
+
+<h2 align = "center"> Three.js и геометрия.  &ensp; Глава 24. &ensp; Построение рундиста огранки имеющей рундист 
+в форме "подушки" (<em>cushion</em>) часть 2</h2>
+<p>
+Данная глава является продолжением предыдущей. В построение рундиста из предыдущей главы добавлена точка <b>O4</b>.
+Это изменение позволяет более гибко задавать размеры сегментов рундиста. Координаты этой точки задаются
+следующим образом:
+<br>
+&emsp; <code>O4 = new Point2D(gd_segments * lw, gd_segments);</code>
+<br>
+Параметр <b>gd_segments</b> при построении рундиста подобным образом должен иметь одноименное поле в СДМ.
+
+</p>
+<p>
+
+<div class="out_girdle" id="out_girdle_01">  
+		<canvas id="canvas_01" width="900" height="500" style="border: 1px solid"></canvas>
+		<div class="gui_girdle" id="gui_container1" ></div> 
+</div>
+
+<h3 align = "center"> Изменения в исходном тексте программы построения линии рундиста(<em>pear</em>)</h3>
+<p>
+Изменения в тексте сделанные для нового способа нахождения границ сегментов показаны в следующем листинге: 
+</p>
+
+<pre class="prettyprint" id="quine">
+function init_girdle()
+{
+	.............................................
+	.............................................
+
+	// Находим положение точки на луче, 
+	//который будет определять направление на котором  
+	//лежит угловая вершина рундиста girdle[8]. 
+	// Этот луч будет использоваться в качестве 
+	//начальной прямой отсчета для углов ang_2 и ang_3.
+	//var ang_corner = ang_corner;      !!!!!!!!!
+
+	var u = new Point2D();
+	u[0] = O3[0] + Math.cos(ang_corner) * R3;
+	u[1] = O3[1] + Math.sin(ang_corner) * R3;
+	
+	// Задаем координаты точки O4 используемой для задания начальных точек лучей (прямых) 
+	// используемых для нахождения границ сегментов.
+	O4 = new Point2D(gd_segments * lw, gd_segments);
+
+	var t = new Point2D();	// Точки на радиусах сопрягающей окружности cir3
+	var w = new Point2D();	// На рисунке они лежат на сопрягающей окружности
+	t[0] = O4[0] + Math.cos(ang_corner + ang_2);
+	t[1] = O4[1] + Math.sin(ang_corner + ang_2);
+
+	w[0] = O4[0] + Math.cos(ang_corner - ang_3);
+	w[1] = O4[1] + Math.sin(ang_corner - ang_3);
+
+	//  Используемые для нахождения границ сегментов рундиста лучи
+	// проведенные из точки O4. Точки пересечения этих лучей с линией
+	// рундиста определят границы сегментов лежащих на рундисте.
+	//Line2D ln_O4_t, ln_O4_u, ln_O4_w;
+	var ln_O4_t = new Line2D(O4, t);
+	var ln_O4_u = new Line2D(O4, u);
+	var ln_O4_w = new Line2D(O4, w);
+
+	//  Конструируем верхнюю часть рундиста
+	var s = new Point2D(); // s, v - Точки лежащие на границе сегментов seg1 и seg2
+	var v = new Point2D(); // и также на границе сегментов seg3 и seg4
+	girdle[0] = new Point2D(0, 0.5);
+
+	if(!cir1.IntersectionLineCircle(ln_O4_t, point1, point2))
+	{
+		return null;
+	}
+	//s = (point1[1] > point2[1]) ? point1 : point2;
+	if (point1[1] > point2[1])
+	{
+		s[0] = point1[0]; s[1] = point1[1]
+	}
+	else
+	{
+		s[0] = point2[0]; s[1] = point2[1]			
+	}
+	girdle[4] = s;
+	girdle[8] = u;
+
+	if(!cir2.IntersectionLineCircle(ln_O4_w, point1, point2))
+	{
+		return null;
+	}
+	
+	if (point1[0] > point2[0])
+	{
+		v[0] = point1[0]; v[1] = point1[1]
+	}
+	else
+	{
+		v[0] = point2[0]; v[1] = point2[1]			
+	}
+	
+	girdle[12] = v;
+	girdle[16]= new Point2D(lw/2, 0);
+
+	// Остальной рундист
+	............................................
+	............................................
+}
+</pre>
+
+<h3 align = "center">&emsp;&emsp;
+<a href="../Cushion/Chapter_23.html"> <span class=brown>Глава 23 </span></a>  <span class=brown>&ensp;◄</span>
+&emsp;&emsp;&emsp;
+<a href="../index.html"> <span class=brown> Содержание  </span></a>
+&emsp;&emsp;&emsp;
+ <span class=brown>► </span><a href="../Cushion/Chapter_25.html"> <span class=brown> Глава 25  </span></a>
+</h3>
+
+</body>
+</html>
